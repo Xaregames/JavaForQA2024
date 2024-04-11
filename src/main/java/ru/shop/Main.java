@@ -1,5 +1,6 @@
 package ru.shop;
 
+import ru.shop.exception.BadOrderCountException;
 import ru.shop.model.Customer;
 import ru.shop.model.Order;
 import ru.shop.model.Product;
@@ -7,6 +8,8 @@ import ru.shop.model.ProductType;
 import ru.shop.repository.CustomerRepository;
 import ru.shop.repository.OrderRepository;
 import ru.shop.repository.ProductRepository;
+import ru.shop.service.CustomerService;
+import ru.shop.service.OrderService;
 import ru.shop.service.PruductService;
 
 import java.util.UUID;
@@ -16,10 +19,14 @@ public class Main {
         PruductService pruductService = new PruductService(
                 new ProductRepository()
         );
+        CustomerService customerService = new CustomerService(
+                new CustomerRepository()
+        );
 
-        CustomerRepository repository = new CustomerRepository();
+        OrderService orderService = new OrderService(
+                new OrderRepository()
+        );
 
-        OrderRepository orderRepository = new OrderRepository();
 
         System.out.println(ProductType.SERVICE.name());
 
@@ -33,10 +40,10 @@ public class Main {
         pruductService.save(carWashing);
 
         Customer cust = new Customer(UUID.randomUUID(),"Ivanushka","123456",16);
-        repository.save(cust);
+        customerService.save(cust);
 
         Customer king = new Customer(UUID.randomUUID(),"King","999999",42);
-        repository.save(king);
+        customerService.save(king);
 
 
 
@@ -54,21 +61,30 @@ public class Main {
             System.out.println(product);
         }
 
-        System.out.println("-- Customer --");
-        for(Customer customer : repository.findAll()){
+        System.out.println("-- ALL Customer --");
+        for(Customer customer : customerService.findAll()){
             System.out.println(customer);
         }
 
 
-        Order order = new Order(UUID.randomUUID(),cust.getId(),ladaKalina.getId(),2,200);
 
 
-        orderRepository.save(order);
+        orderService.add(cust,ladaKalina,2);
+        orderService.add(cust,forMustang,2);
 
-        System.out.println("-- Order --");
-        for(Order order1 : orderRepository.findAll()){
-            System.out.println(order1);
+        try {
+            orderService.add(king, forMustang, 0);
+        } catch (BadOrderCountException ex){
+            System.out.println("BadOrderCountException");
         }
+
+        System.out.println("-- CustOrder --");
+        for(Order order : orderService.findByCustomer(cust)){
+            System.out.println(order);
+        }
+
+        System.out.println("Стоймость всех заказов: " + orderService.getTotalCustomerAmount(cust));
+
 
     }
 
